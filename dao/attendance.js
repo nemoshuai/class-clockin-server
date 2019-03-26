@@ -12,7 +12,7 @@ const insert = attendance => {
 
   return new Promise((resolve, reject) => {
     console.log('insert attendance', row);
-    const sql = 'insert into attendance(course_id, tea_id, bookin_time, bookin_code) values(?, ?, ?, ?)';
+    const sql = 'insert into attendance(course_id, tea_id, bookin_time, bookin_code, latitude, longitude) values(?, ?, ?, ?, ?, ?)';
     let res = null;
     try {
       pool.getConnection((error, connection) => {
@@ -126,6 +126,32 @@ const selectAbsenceListByHistoryId = history_id => {
   });
 }
 
+// 获取出勤名单
+const selectPresentListByHistoryId = history_id => {
+  return new Promise((resolve, reject) => {
+    const sql = `select * from student natural join present where stu_id in
+              (select stu_id from stu_course 
+              where course_id in (select course_id from attendance where history_id = ${history_id}) 
+              and stu_id in (select stu_id from present where history_id = ${history_id}));`;
+    try {
+      pool.getConnection((error, connection) => {
+        if(error) throw(error);
+        connection.query(sql,(error, result) => {
+          if (error) throw(error);
+          console.log('[select]', result);
+          if(result) {
+            rows = _.cloneDeep(util.formatData(result));
+          }
+          resolve(rows);
+        });
+        connection.release();
+      });
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
 // 获取选课学生数量 by history_id
 const countStudentByHistoryId = history_id => {
   return new Promise((resolve, reject) => {
@@ -203,6 +229,7 @@ module.exports = {
   selectAttendanceByTeaId,
   // selectAttendanceDetailByHistoryId,
   selectAbsenceListByHistoryId,
+  selectPresentListByHistoryId,
   selectBookingAttendanceByCourseId,
   countStudentByHistoryId,
   selectCourseByHistoryId

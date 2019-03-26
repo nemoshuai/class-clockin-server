@@ -12,7 +12,7 @@ const insert = present => {
 
   return new Promise((resolve, reject) => {
     console.log('insert row', row);
-    const sql = 'insert into present(history_id, course_id, stu_id) values(?, ?, ?)';
+    const sql = 'insert into present(history_id, course_id, stu_id, latitude, longitude) values(?, ?, ?, ?, ?)';
     // let res = null;
     try {
       pool.getConnection((error, connection) => {

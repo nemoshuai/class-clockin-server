@@ -42,12 +42,14 @@ const studentBookin = (req, res, next) => {
   console.log("student 签到", req.body);
   const stu_id = req.body.stu_id;
   const course_id = req.body.course_id;
+  const latitude = req.body.latitude;
+  const longitude = req.body.longitude;
   // res.status(200).send({success: 0});
   attendanceDAO.selectBookingAttendanceByCourseId(req.body.course_id).then(result => {
     if(result.length) {
       const history_id = result[result.length - 1].history_id;
       if (result[result.length - 1].bookin_code === req.body.bookin_code) {
-        const present = { history_id,  course_id, stu_id};
+        const present = { history_id,  course_id, stu_id, latitude, longitude};
         presentDAO.insert(present).then(r => {
           console.log("签到", r);
           if (r) {
@@ -81,7 +83,14 @@ const getAttendanceDetail = (req, res, next) => {
           attendanceDAO.selectAbsenceListByHistoryId(req.params.history_id).then(absence => {
             if(absence) {
               result = { ...courseAttendanceRes[0], total, absence };
-              res.status(200).send(result);
+              // 获取出席学生
+              attendanceDAO.selectPresentListByHistoryId(req.params.history_id).then(present => {
+                result = { ...result, present };
+                res.status(200).send(result);
+              }).catch(error => {
+                console.log('detail 4', error);
+                res.status(500).send({msg: '服务器失败'});
+              });
             }
           }).catch(error => {
             console.log('detail 3', error);
